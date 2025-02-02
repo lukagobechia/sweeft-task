@@ -7,6 +7,8 @@ import { CompanyModule } from './company/company.module';
 import { Company } from './company/entities/company.entity';
 import { User } from './user/entities/user.entity';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { EmailSenderModule } from './email-sender/email-sender.module';
+import { MailerModule } from '@nestjs-modules/mailer';
 
 @Module({
   imports: [
@@ -26,8 +28,18 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
         logging: true,
       }),
     }),
+    MailerModule.forRoot({
+      transport: {
+        host: process.env.EMAIL_HOST,
+        auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASS,
+        }
+      }
+    }),
     UserModule,
     CompanyModule,
+    EmailSenderModule,
   ],
   controllers: [AppController],
   providers: [AppService],
