@@ -1,5 +1,5 @@
 import { Exclude } from 'class-transformer';
-import { User } from 'src/user/entities/user.entity';
+import { Employee } from 'src/employee/entities/employee.entity';
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity()
@@ -29,13 +29,13 @@ export class Company {
   @Column({
     type: 'enum',
     enum: ['free tier', 'basic', 'Premium'],
-    default: 'free tier',
+    default: null
   })
   plan: string;
 
   @Column({ default: false })
   isActive: boolean;
 
-  @OneToMany(() => User, (user) => user.company)
-  users: User[];
+  @OneToMany(() => Employee, (employee) => employee.company)
+  employees: Employee[];
 }

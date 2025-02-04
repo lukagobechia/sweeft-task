@@ -9,7 +9,7 @@ import {
 } from 'typeorm';
 
 @Entity()
-export class User {
+export class Employee {
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -23,11 +23,11 @@ export class User {
   email: string;
 
   @Exclude()
-  @Column({ type: 'varchar' })
+  @Column({ type: 'varchar', nullable: true })
   password: string;
 
   @Column({
-    default: 'user',
+    default: 'employee',
   })
   role: string;
 
@@ -35,7 +35,7 @@ export class User {
   isActive: boolean;
 
   @Exclude()
-  @ManyToOne(() => Company, (company) => company.users)
+  @ManyToOne(() => Company, (company) => company.employees, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'companyId' })
   company: Company;
 }

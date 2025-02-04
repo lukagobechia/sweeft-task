@@ -3,6 +3,8 @@ import {
   Injectable,
   NotFoundException,
   InternalServerErrorException,
+  forwardRef,
+  Inject,
 } from '@nestjs/common';
 import { CreateCompanyDto } from './dto/create-company.dto';
 import { UpdateCompanyDto } from './dto/update-company.dto';
@@ -10,11 +12,15 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Company } from './entities/company.entity';
 import { Repository } from 'typeorm';
 import { plainToClass } from 'class-transformer';
-
+import { CreateEmployeeDto } from 'src/employee/dto/create-employee.dto';
+import { EmployeeService } from 'src/employee/employee.service';
+import { UpdateEmployeeDto } from 'src/employee/dto/update-employee.dto';
 @Injectable()
 export class CompanyService {
   constructor(
     @InjectRepository(Company) private companyRepository: Repository<Company>,
+    @Inject(forwardRef(() => EmployeeService))
+    private employeeService: EmployeeService,
   ) {}
 
   async create(createCompanyDto: CreateCompanyDto): Promise<Company> {
@@ -31,23 +37,9 @@ export class CompanyService {
     }
   }
 
-  async findAll(): Promise<Partial<Company[]>> {
+  async findAll(): Promise<Company[]> {
     try {
-      const companies = await this.companyRepository.find({
-        relations: ['users'],
-        select: {
-          users: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            email: true,
-            isActive: true,
-          },
-        },
-      });
-      if (companies.length === 0)
-        throw new NotFoundException('No companies found');
-
+      const companies = await this.companyRepository.find();
       return plainToClass(Company, companies);
     } catch (error) {
       throw new InternalServerErrorException(
@@ -60,9 +52,9 @@ export class CompanyService {
     try {
       const company = await this.companyRepository.findOne({
         where: { id },
-        relations: ['users'],
+        relations: ['employees'],
         select: {
-          users: {
+          employees: {
             id: true,
             firstName: true,
             lastName: true,
@@ -75,7 +67,7 @@ export class CompanyService {
       return plainToClass(Company, company);
     } catch (error) {
       throw new InternalServerErrorException(
-        'Error fetching company: ' + error.message,
+        'Error fetching company 5: ' + error.message,
       );
     }
   }
@@ -114,5 +106,57 @@ export class CompanyService {
         'Error deleting user: ' + error.message,
       );
     }
+  }
+
+  async findCompanyByEmail(email: string): Promise<Company | null> {
+    try {
+      const company = await this.companyRepository.findOne({
+        where: { email },
+      });
+      return company;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        'Error fetching company 5: ' + error.message,
+      );
+    }
+  }
+
+  async verifyCompany(email: string): Promise<void> {
+    const company = await this.companyRepository.findOne({ where: { email } });
+    if (!company) {
+      throw new NotFoundException('Company not found');
+    }
+    company.isActive = true;
+    await this.companyRepository.save(company);
+  }
+
+  async getCurrentCompany(id: number): Promise<Company> {
+    const company = await this.findOne(id);
+    return plainToClass(Company, company);
+  }
+
+  // employee management
+  addEmployee(CreateEmployeeDto: CreateEmployeeDto, companyId: number) {
+    return this.employeeService.addEmployee(CreateEmployeeDto, companyId);
+  }
+  getEmployees(companyId: number) {
+    return this.employeeService.findAllEmployeesInCompany(companyId);
+  }
+  getEmployee(companyId: number, userId: number) {
+    return this.employeeService.findEmployeeInCompany(companyId, userId);
+  }
+  // updateEmployee(
+  //   companyId: number,
+  //   userId: number,
+  //   UpdateEmployeeDto: UpdateEmployeeDto,
+  // ) {
+  //   return this.employeeService.updateEmployeeInCompany(
+  //     companyId,
+  //     userId,
+  //     UpdateEmployeeDto,
+  //   );
+  // }
+  removeEmployee(companyId: number, userId: number) {
+    return this.employeeService.removeEmployeeInCompany(companyId, userId);
   }
 }

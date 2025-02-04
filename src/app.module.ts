@@ -2,13 +2,14 @@ import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { UserModule } from './user/user.module';
+import { EmployeeModule } from './employee/employee.module';
 import { CompanyModule } from './company/company.module';
 import { Company } from './company/entities/company.entity';
-import { User } from './user/entities/user.entity';
+import { Employee } from './employee/entities/employee.entity';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { EmailSenderModule } from './email-sender/email-sender.module';
 import { MailerModule } from '@nestjs-modules/mailer';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -23,7 +24,7 @@ import { MailerModule } from '@nestjs-modules/mailer';
         username: configService.get('DB_USERNAME'),
         password: configService.get('DB_PASSWORD'),
         database: configService.get('DB_DATABASE'),
-        entities: [User, Company],
+        entities: [Employee, Company],
         synchronize: true,
         logging: true,
       }),
@@ -31,15 +32,17 @@ import { MailerModule } from '@nestjs-modules/mailer';
     MailerModule.forRoot({
       transport: {
         host: process.env.EMAIL_HOST,
+        port: 465,
         auth: {
           user: process.env.EMAIL_USER,
           pass: process.env.EMAIL_PASS,
         }
       }
     }),
-    UserModule,
+    EmployeeModule,
     CompanyModule,
     EmailSenderModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],
