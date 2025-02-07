@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   InternalServerErrorException,
+  BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -24,49 +25,97 @@ export class EmployeeService {
     private readonly jwtService: JwtService,
   ) {}
 
-  async addEmployee(createEmployeeDto: CreateEmployeeDto,companyId: number): Promise<Employee> {
+  async addEmployee(
+    createEmployeeDto: CreateEmployeeDto,
+    companyId: number,
+  ): Promise<Employee> {
     try {
       const company = await this.companyService.findOne(companyId);
 
       const existUser = await this.findEmployeeByEmail(createEmployeeDto.email);
       if (existUser)
-        throw new NotFoundException('User with that email already exist');
-
-      const employee = this.employeeRepository.create({ ...createEmployeeDto, password: '', company });
+        throw new BadRequestException('User with that email already exist');
+      const temporaryPassword = this.generateTemporaryPassword();
+      const HashedtemporaryPassword = await bcrypt.hash(temporaryPassword, 10);
+      
+      const employee = this.employeeRepository.create({
+        ...createEmployeeDto,
+        password: HashedtemporaryPassword,
+        company,
+      });
       const newEmployee = await this.employeeRepository.save(employee);
 
       const payload = {
         id: newEmployee.id,
         email: newEmployee.email,
         role: 'employee',
-        companyId: newEmployee.company.id,
+        companyId: company.id,
       };
 
       const accessToken = await this.jwtService.sign(payload, {
         expiresIn: '15m',
       });
 
-      await this.emailSenderService.sendActivationEmailToEmployee(newEmployee,accessToken);
+      await this.emailSenderService.sendActivationEmailToEmployee(
+        newEmployee,
+        accessToken,
+        temporaryPassword,
+      );
 
       return plainToClass(Employee, newEmployee);
     } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
       throw new InternalServerErrorException(
         'Error creating employee: 5' + error.message,
       );
     }
   }
 
+  generateTemporaryPassword(): string {
+    const length = 10;
+    const lowercase = 'abcdefghijklmnopqrstuvwxyz';
+    const digits = '0123456789';
+
+    let password = ['A', '@'];
+
+    const allChars = lowercase + digits;
+    while (password.length < length) {
+      password.push(allChars[Math.floor(Math.random() * allChars.length)]);
+    }
+    return password.sort(() => Math.random() - 0.5).join('');
+  }
+
   async findEmployeeByEmail(email: string): Promise<Employee | null> {
     const employee = await this.employeeRepository.findOne({
       where: { email },
+      relations: ['company'],
+      select: {
+        company: {
+          id: true,
+          name: true,
+          email: true,
+        },
+      },
     });
     return employee;
   }
+
+  async findOne(id: number): Promise<Employee> {
+    const employee = await this.employeeRepository.findOne({
+      where: { id },
+      relations: ['company'],
+    });
+    if (!employee) throw new NotFoundException('employee not found 5');
+    return employee;
+  }
+
   async findAllEmployeesInCompany(companyId: number): Promise<Employee[]> {
     try {
       const employees = await this.employeeRepository.find({
         where: { company: { id: companyId } },
-        relations: ['company'],
+        relations: ['company', 'uploadedFiles'],
         select: {
           company: {
             id: true,
@@ -84,11 +133,14 @@ export class EmployeeService {
     }
   }
 
-  async findEmployeeInCompany(employeeId: number,companyId: number): Promise<Employee> {
+  async findEmployeeInCompany(
+    employeeId: number,
+    companyId: number,
+  ): Promise<Employee> {
     try {
       const employee = await this.employeeRepository.findOne({
         where: { id: employeeId, company: { id: companyId } },
-        relations: ['company'],
+        relations: ['company', 'uploadedFiles'],
         select: {
           company: {
             id: true,
@@ -109,12 +161,24 @@ export class EmployeeService {
     }
   }
 
-  async updateEmployeeInCompany(id: number, companyId: number, updateEmployeeDto: UpdateEmployeeDto): Promise<Employee> {
-    const employee = await this.employeeRepository.findOne({ where: { id, company: { id: companyId } } });
-    if (!employee) throw new NotFoundException('employee not found in the specified company');
+  async updateEmployeeInCompany(
+    id: number,
+    companyId: number,
+    updateEmployeeDto: UpdateEmployeeDto,
+  ): Promise<Employee> {
+    const employee = await this.employeeRepository.findOne({
+      where: { id, company: { id: companyId } },
+    });
+    if (!employee)
+      throw new NotFoundException(
+        'employee not found in the specified company',
+      );
 
     try {
-      const updatedemployee = await this.employeeRepository.save({ ...employee, ...updateEmployeeDto });
+      const updatedemployee = await this.employeeRepository.save({
+        ...employee,
+        ...updateEmployeeDto,
+      });
       return plainToClass(Employee, updatedemployee);
     } catch (error) {
       throw new InternalServerErrorException(
@@ -148,22 +212,11 @@ export class EmployeeService {
     }
   }
 
-  // async verifyEmployee(email: string): Promise<void> {
-  //   const employee = await this.employeeRepository.findOne({
-  //     where: { email },
-  //   });
-  //   if (!employee) {
-  //     throw new NotFoundException('employee not found');
-  //   }
-  //   employee.isActive = true;
-  //   await this.employeeRepository.save(employee);
-  // }
-
   async getCurrentEmployee(employeeId: number): Promise<Employee> {
     try {
       const employee = await this.employeeRepository.findOne({
         where: { id: employeeId },
-        relations: ['company'],
+        relations: ['company', 'uploadedFiles'],
       });
       if (!employee) throw new NotFoundException('employee not found 5');
       return plainToClass(Employee, employee);

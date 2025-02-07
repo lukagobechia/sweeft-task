@@ -1,6 +1,7 @@
 import { Exclude } from 'class-transformer';
 import { Employee } from 'src/employee/entities/employee.entity';
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { File } from 'src/file/entities/file.entity';
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn, ManyToOne, JoinColumn} from 'typeorm';
 
 @Entity()
 export class Company {
@@ -28,14 +29,23 @@ export class Company {
 
   @Column({
     type: 'enum',
-    enum: ['free tier', 'basic', 'Premium'],
+    enum: ['free tier', 'basic', 'premium'],
     default: null
   })
-  plan: string;
+  subscriptionPlan: string;
+
+  @Column({ type: 'date', nullable: true, default: null })
+  subscriptionStartDate: Date | null;
+
+  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
+  billingAmount: number;
 
   @Column({ default: false })
   isActive: boolean;
 
   @OneToMany(() => Employee, (employee) => employee.company)
   employees: Employee[];
+
+  @OneToMany(() => File, (file) => file.company)
+  uploadedFiles: File[];
 }

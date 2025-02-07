@@ -31,7 +31,7 @@ export class AuthService {
 
     const newUser = await this.companyService.create({
       ...signUpDto,
-      password: hashedPassword,
+      password: hashedPassword
     });
 
     const payload = {
@@ -82,12 +82,24 @@ export class AuthService {
     if (!isPasswordMatch)
       throw new BadRequestException('Email or password is incorrect');
 
-    const payload = {
-      id: user.id,
-      email: user.email,
-      role: user.role,
-      isActive: user.isActive,
-    };
+    let payload: any;
+
+    if (user.role === 'employee') {
+      payload = {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        isActive: user.isActive,
+        companyId: user.company.id,
+      };
+    } else {
+      payload = {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        isActive: user.isActive,
+      };
+    }
 
     const accessToken = await this.jwtService.sign(payload, {
       expiresIn: '1h',
@@ -95,9 +107,16 @@ export class AuthService {
 
     if (!user.isActive) {
       if (user.role === 'employee') {
-        await this.emailSenderService.sendActivationEmailToEmployee(user,accessToken);
+        await this.emailSenderService.resendActivationEmailToEmployee(
+          user,
+          accessToken,
+        );
+        return { message: 'Please Check your email and activate your account' };
       } else if (user.role === 'company') {
-        await this.emailSenderService.sendActivationEmailToCompany(user,accessToken);
+        await this.emailSenderService.sendActivationEmailToCompany(
+          user,
+          accessToken,
+        );
         throw new BadRequestException(
           'Please Check your email and activate your account',
         );
@@ -182,9 +201,9 @@ export class AuthService {
       const hashedPassword = bcrypt.hashSync(password, 10);
       user.password = hashedPassword;
 
-      await this.companyService.update(payload.id,user);
+      await this.companyService.update(payload.id, user);
 
-      return "Password reset successfully";
+      return 'Password reset successfully';
     } catch (error) {
       throw new BadRequestException('Invalid or expired token');
     }

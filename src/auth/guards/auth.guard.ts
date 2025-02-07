@@ -24,8 +24,7 @@ export class AuthGuard implements CanActivate {
         throw new UnauthorizedException('Unauthorized access: Inactive user');
       }
       
-      request.user = { id: payload.id, isActive: payload.isActive };
-      console.log('Request user:', request.user);
+      request.user = { id: payload.id, isActive: payload.isActive, companyId: payload.companyId, email: payload.email, role: payload.role };
       return true;
     } catch (e) {
       console.log(e);

@@ -29,13 +29,14 @@ export class EmailSenderService {
     const html = `
       <div style="font-family: Arial, sans-serif; line-height: 1.6;">
       <h3>${company.name}, welcome to CManagement!</h3>
-      <p>Thank you for signing up. Please activate your email by clicking the link below:</p>
+      <p>Thank you for signing up. Please activate your acount by clicking the link below:</p>
       <a 
         href="http://localhost:3000/auth/confirm-email?token=${accessToken}" 
         style="display: inline-block; padding: 10px 20px; margin: 10px 0; font-size: 16px; color: #fff; background-color: #007bff; text-decoration: none; border-radius: 5px;"
       >
         Activate Account
       </a>
+       <p>If the activation link has expired try to log in order to request a new activation email. <br></p>
       <p>If you did not sign up for this account, please ignore this email.</p>
       <p>Best regards,<br/>Cmanagement Team</p>
       </div>
@@ -44,23 +45,51 @@ export class EmailSenderService {
     await this.sendMail(company.email, 'Account Activation', html);
   }
 
-  async sendActivationEmailToEmployee(employee: Employee, accessToken: string) {
+  async sendActivationEmailToEmployee(
+    employee: Employee,
+    accessToken: string,
+    temporaryPassword: string,
+  ) {
     const html = `
       <div style="font-family: Arial, sans-serif; line-height: 1.6;">
-        <h3>Dear ${employee.firstName},</h3>
-        <p>${employee.company.name} has added you as an employee.</p>
-        <p>Please set your password and activate your email by clicking the link below:</p>
-        <a 
-          href="http://localhost:3000/auth/confirm-email?token=${accessToken}" 
-          style="display: inline-block; padding: 10px 20px; margin: 10px 0; font-size: 16px; color: #fff; background-color: #007bff; text-decoration: none; border-radius: 5px;"
-        >
-          Activate Account
-        </a>
-        <p>If you did not expect this email, please ignore it.</p>
-        <p>Best regards,<br/>CManagement Team</p>
+      <h3>Dear ${employee.firstName},</h3>
+      <p>${employee.company.name} has added you as an employee.</p>
+      <p>Please set your password and activate your account by clicking the link below:</p>
+      <a 
+      href="http://localhost:3000/auth/confirm-email?token=${accessToken}" 
+      style="display: inline-block; padding: 10px 20px; margin: 10px 0; font-size: 16px; color: #fff; background-color: #007bff; text-decoration: none; border-radius: 5px;"
+      >
+      Activate Account
+      </a>
+      <p>If the activation link has expired, you can use the temporary password: <strong>${temporaryPassword}</strong> to log in to request a new activation email.</p>
+      <p>If you did not expect this email, please disregard it.</p>
+      <p>Best regards,<br/>CManagement Team</p>
       </div>
     `;
-    
+
+    await this.sendMail(employee.email, 'Account Activation', html);
+  }
+
+  async resendActivationEmailToEmployee(
+    employee: Employee,
+    accessToken: string,
+  ) {
+    const html = `
+    <div style="font-family: Arial, sans-serif; line-height: 1.6;">
+    <h3>Dear ${employee.firstName},</h3>
+    <p>${employee.company.name} has added you as an employee.</p>
+    <p>Please set your password and activate your account by clicking the link below:</p>
+    <a 
+      href="http://localhost:3000/auth/confirm-email?token=${accessToken}" 
+      style="display: inline-block; padding: 10px 20px; margin: 10px 0; font-size: 16px; color: #fff; background-color: #007bff; text-decoration: none; border-radius: 5px;"
+    >
+      Activate Account
+    </a>
+    <p>If the activation link has expired, you can use the temporary password provided to log in to request a new activation email.</p>
+    <p>If you did not expect this email, please disregard it.</p>
+    <p>Best regards,<br/>CManagement Team</p>
+    </div>
+  `;
     await this.sendMail(employee.email, 'Account Activation', html);
   }
 

@@ -11,7 +11,6 @@ export class EmployeeController {
   @UseGuards(AuthGuard, IsEmployee)
   getCurrentEmployee(@Req() req) {
     const userId = req.user.id;
-    console.log('userId', userId);
     return this.employeeService.getCurrentEmployee(userId);
   }
 }

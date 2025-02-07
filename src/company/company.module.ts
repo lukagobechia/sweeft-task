@@ -13,6 +13,6 @@ import { EmployeeModule } from 'src/employee/employee.module';
   ],
   controllers: [CompanyController],
   providers: [CompanyService],
-  exports: [CompanyService],
+  exports: [CompanyService, TypeOrmModule],
 })
 export class CompanyModule {}

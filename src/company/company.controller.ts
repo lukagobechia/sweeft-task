@@ -8,6 +8,7 @@ import {
   Delete,
   Req,
   UseGuards,
+  Res,
 } from '@nestjs/common';
 import { CompanyService } from './company.service';
 import { UpdateCompanyDto } from './dto/update-company.dto';
@@ -15,6 +16,8 @@ import { AuthGuard } from 'src/auth/guards/auth.guard';
 import { IsCompany } from 'src/auth/guards/role.guard';
 import { EmployeeService } from 'src/employee/employee.service';
 import { CreateEmployeeDto } from 'src/employee/dto/create-employee.dto';
+import { SubscriptionGuard } from 'src/subscription/subscription.guard';
+import { RestrictAccess } from 'src/subscription/restrictAccess.guard';
 
 @Controller('company')
 export class CompanyController {
@@ -48,7 +51,7 @@ export class CompanyController {
 
   // employee
   @Post('create-employee')
-  @UseGuards(AuthGuard, IsCompany)
+  @UseGuards(AuthGuard, IsCompany, SubscriptionGuard, RestrictAccess)
   addEmployee(@Req() req, @Body() CreateEmployeeDto: CreateEmployeeDto) {
     const companyId = req.user.id;
     return this.companyService.addEmployee(CreateEmployeeDto, companyId);
@@ -74,36 +77,4 @@ export class CompanyController {
     const companyId = req.user.id;
     return this.companyService.removeEmployee(+id, companyId);
   }
-
-  // @Patch('employee/:id')
-  // @UseGuards(AuthGuard, IsCompany)
-  // updateEmployee(
-  //   @Param('id') id: string,
-  //   @Body() CreateEmployeeDto: CreateEmployeeDto,
-  //   @Req() req,
-  // ) {
-  //   const companyId = req.user.id;
-  //   return this.companyService.updateEmployee(
-  //     +id,
-  //     companyId,
-  //     CreateEmployeeDto,
-  //   );
-  // }
-
-  // amdin
-  @Get('find')
-  findCompanies() {
-    return this.companyService.findAll();
-  }
-
-  @Patch(':id')
-  updateAll(@Param('id') id: string, @Body() updateCompanyDto: UpdateCompanyDto) {
-    return this.companyService.update(+id, updateCompanyDto);
-  }
-
-  @Delete(':id')
-  removeAll(@Param('id') id: string) {
-    return this.companyService.remove(+id);
-  }
-
 }

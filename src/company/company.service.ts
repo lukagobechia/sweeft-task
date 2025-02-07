@@ -14,7 +14,7 @@ import { Repository } from 'typeorm';
 import { plainToClass } from 'class-transformer';
 import { CreateEmployeeDto } from 'src/employee/dto/create-employee.dto';
 import { EmployeeService } from 'src/employee/employee.service';
-import { UpdateEmployeeDto } from 'src/employee/dto/update-employee.dto';
+
 @Injectable()
 export class CompanyService {
   constructor(
@@ -39,8 +39,8 @@ export class CompanyService {
 
   async findAll(): Promise<Company[]> {
     try {
-      const companies = await this.companyRepository.find();
-      return plainToClass(Company, companies);
+      const companies = await this.companyRepository.find({relations: ['employees', 'uploadedFiles']});
+      return companies;
     } catch (error) {
       throw new InternalServerErrorException(
         'Error fetching companies: ' + error.message,
@@ -52,15 +52,15 @@ export class CompanyService {
     try {
       const company = await this.companyRepository.findOne({
         where: { id },
-        relations: ['employees'],
+        relations: ['employees', 'uploadedFiles', 'uploadedFiles.uploadedBy'],
         select: {
           employees: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            email: true,
-            isActive: true,
-          },
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        isActive: true,
+          }
         },
       });
       if (!company) throw new NotFoundException('Company not found');
@@ -145,17 +145,7 @@ export class CompanyService {
   getEmployee(companyId: number, userId: number) {
     return this.employeeService.findEmployeeInCompany(companyId, userId);
   }
-  // updateEmployee(
-  //   companyId: number,
-  //   userId: number,
-  //   UpdateEmployeeDto: UpdateEmployeeDto,
-  // ) {
-  //   return this.employeeService.updateEmployeeInCompany(
-  //     companyId,
-  //     userId,
-  //     UpdateEmployeeDto,
-  //   );
-  // }
+
   removeEmployee(companyId: number, userId: number) {
     return this.employeeService.removeEmployeeInCompany(companyId, userId);
   }

@@ -1,9 +1,11 @@
 import { Exclude } from 'class-transformer';
 import { Company } from 'src/company/entities/company.entity';
+import { File } from 'src/file/entities/file.entity';
 import {
   Column,
   Entity,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
   JoinColumn,
 } from 'typeorm';
@@ -38,4 +40,7 @@ export class Employee {
   @ManyToOne(() => Company, (company) => company.employees, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'companyId' })
   company: Company;
+
+  @OneToMany(() => File, (file) => file.uploadedBy)
+  uploadedFiles: File[];
 }

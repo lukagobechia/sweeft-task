@@ -10,7 +10,10 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { EmailSenderModule } from './email-sender/email-sender.module';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { AuthModule } from './auth/auth.module';
-
+import { SubscriptionModule } from './subscription/subscription.module';
+import { AwsS3Module } from './aws-s3/aws-s3.module';
+import { FileModule } from './file/file.module';
+import { File } from './file/entities/file.entity';
 @Module({
   imports: [
     ConfigModule.forRoot({ envFilePath: '.env', isGlobal: true }),
@@ -24,7 +27,7 @@ import { AuthModule } from './auth/auth.module';
         username: configService.get('DB_USERNAME'),
         password: configService.get('DB_PASSWORD'),
         database: configService.get('DB_DATABASE'),
-        entities: [Employee, Company],
+        entities: [Employee, Company, File],
         synchronize: true,
         logging: true,
       }),
@@ -43,6 +46,9 @@ import { AuthModule } from './auth/auth.module';
     CompanyModule,
     EmailSenderModule,
     AuthModule,
+    SubscriptionModule,
+    AwsS3Module,
+    FileModule,
   ],
   controllers: [AppController],
   providers: [AppService],

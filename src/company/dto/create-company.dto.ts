@@ -2,6 +2,7 @@ import {
   IsEmail,
   IsEnum,
   IsNotEmpty,
+  IsOptional,
   IsString,
   Matches,
   MinLength,
@@ -38,11 +39,6 @@ export class CreateCompanyDto {
   @IsString()
   @IsNotEmpty()
   industry: string;
-
-  @IsString()
-  @IsNotEmpty()
-  @IsEnum(['free tier', 'basic', 'Premium'])
-  plan: string;
 
   @IsNotEmpty()
   isActive: boolean;
