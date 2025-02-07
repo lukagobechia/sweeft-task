@@ -4,9 +4,9 @@ WORKDIR /app
 
 COPY package*.json ./
 
-RUN npm install
-
-RUN npm rebuild bcrypt --build-from-source
+RUN apk add --no-cache python3 make g++ \
+    && npm install \
+    && npm rebuild bcrypt --build-from-source
 
 COPY . .
 
