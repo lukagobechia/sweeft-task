@@ -2,14 +2,14 @@ import {
   Controller,
   Get,
   Post,
-  Body,
   Patch,
-  Param,
+  Body,
   Delete,
   Req,
+  Param,
   UseGuards,
-  Res,
 } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CompanyService } from './company.service';
 import { UpdateCompanyDto } from './dto/update-company.dto';
 import { AuthGuard } from 'src/auth/guards/auth.guard';
@@ -19,6 +19,7 @@ import { CreateEmployeeDto } from 'src/employee/dto/create-employee.dto';
 import { SubscriptionGuard } from 'src/subscription/subscription.guard';
 import { RestrictAccess } from 'src/subscription/restrictAccess.guard';
 
+@ApiTags('Company')
 @Controller('company')
 export class CompanyController {
   constructor(
@@ -26,17 +27,19 @@ export class CompanyController {
     private EmployeeService: EmployeeService,
   ) {}
 
-  // company 
   @Get('current')
   @UseGuards(AuthGuard, IsCompany)
+  @ApiOperation({ summary: 'Get the current company data' })
+  @ApiResponse({ status: 200, description: 'Company data fetched successfully' })
   getCurrentCompany(@Req() req) {
     const companyId = req.user.id;
-    console.log('companyId', companyId);
     return this.companyService.getCurrentCompany(companyId);
   }
 
   @Patch()
   @UseGuards(AuthGuard, IsCompany)
+  @ApiOperation({ summary: 'Update company data' })
+  @ApiResponse({ status: 200, description: 'Company updated successfully' })
   update(@Body() updateCompanyDto: UpdateCompanyDto, @Req() req) {
     const companyId = req.user.id;
     return this.companyService.update(companyId, updateCompanyDto);
@@ -44,14 +47,17 @@ export class CompanyController {
 
   @Delete()
   @UseGuards(AuthGuard, IsCompany)
+  @ApiOperation({ summary: 'Remove the current company' })
+  @ApiResponse({ status: 200, description: 'Company removed successfully' })
   remove(@Req() req) {
     const companyId = req.user.id;
     return this.companyService.remove(companyId);
   }
 
-  // employee
   @Post('create-employee')
   @UseGuards(AuthGuard, IsCompany, SubscriptionGuard, RestrictAccess)
+  @ApiOperation({ summary: 'Add a new employee to the company' })
+  @ApiResponse({ status: 201, description: 'Employee added successfully' })
   addEmployee(@Req() req, @Body() CreateEmployeeDto: CreateEmployeeDto) {
     const companyId = req.user.id;
     return this.companyService.addEmployee(CreateEmployeeDto, companyId);
@@ -59,6 +65,8 @@ export class CompanyController {
 
   @Get('employees')
   @UseGuards(AuthGuard, IsCompany)
+  @ApiOperation({ summary: 'Get a list of employees in the company' })
+  @ApiResponse({ status: 200, description: 'List of employees fetched successfully' })
   getEmployees(@Req() req) {
     const companyId = req.user.id;
     return this.companyService.getEmployees(companyId);
@@ -66,6 +74,8 @@ export class CompanyController {
 
   @Get('employee/:id')
   @UseGuards(AuthGuard, IsCompany)
+  @ApiOperation({ summary: 'Get specific employee data' })
+  @ApiResponse({ status: 200, description: 'Employee data fetched successfully' })
   getEmployee(@Param('id') id: string, @Req() req) {
     const companyId = req.user.id;
     return this.companyService.getEmployee(+id, companyId);
@@ -73,6 +83,8 @@ export class CompanyController {
 
   @Delete('employee/:id')
   @UseGuards(AuthGuard, IsCompany)
+  @ApiOperation({ summary: 'Remove an employee from the company' })
+  @ApiResponse({ status: 200, description: 'Employee removed successfully' })
   removeEmployee(@Param('id') id: string, @Req() req) {
     const companyId = req.user.id;
     return this.companyService.removeEmployee(+id, companyId);

@@ -1,0 +1,195 @@
+openapi: 3.0.0
+info:
+  title: Company Management API
+  description: API for managing authentication, companies, employees, files, and subscriptions.
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000/api
+    description: Local development server
+
+paths:
+  /employee/current:
+    get:
+      summary: Get the current employee data
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Employee data fetched successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    description: The employee's ID
+                  name:
+                    type: string
+                    description: The employee's name
+                  email:
+                    type: string
+                    description: The employee's email address
+                  role:
+                    type: string
+                    description: The employee's role in the company
+        '401':
+          description: Unauthorized - Invalid or missing token
+        '403':
+          description: Forbidden - Insufficient permissions
+        '404':
+          description: Not Found - Employee not found
+
+  /auth/sign-up:
+    post:
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignUpDto'
+      responses:
+        '201':
+          description: User registered successfully
+        '400':
+          description: Bad request
+
+  /auth/sign-in:
+    post:
+      summary: Log in a user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignInDto'
+      responses:
+        '200':
+          description: Successful login
+        '401':
+          description: Unauthorized
+
+  /auth/confirm-email:
+    get:
+      summary: Confirm user email
+      parameters:
+        - name: token
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Email confirmed successfully
+        '400':
+          description: Invalid or expired token
+
+  /company/current:
+    get:
+      summary: Get current company details
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Company details retrieved successfully
+        '403':
+          description: Forbidden
+
+  /company/create-employee:
+    post:
+      summary: Create a new employee
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateEmployeeDto'
+      responses:
+        '201':
+          description: Employee created successfully
+        '403':
+          description: Forbidden
+
+  /file/uploadFile:
+    post:
+      summary: Upload a file
+      security:
+        - bearerAuth: [] # Require bearer token for authentication
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                restricted:
+                  type: string
+                allowedEmployees:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '201':
+          description: File uploaded successfully
+        '403':
+          description: Forbidden
+
+  /subscription/upgrade:
+    patch:
+      summary: Upgrade company subscription
+      security:
+        - bearerAuth: [] # Require bearer token for authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                subscriptionPlan:
+                  type: string
+      responses:
+        '200':
+          description: Subscription upgraded
+        '403':
+          description: Forbidden
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    SignUpDto:
+      type: object
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+        name:
+          type: string
+    SignInDto:
+      type: object
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+    CreateEmployeeDto:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
